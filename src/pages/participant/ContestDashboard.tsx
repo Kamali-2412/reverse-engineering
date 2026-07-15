@@ -22,6 +22,8 @@ export default function ContestDashboard() {
       return
     }
     loadData()
+    const interval = setInterval(loadData, 10000)
+    return () => clearInterval(interval)
   }, [contestId])
 
   useEffect(() => {
@@ -33,18 +35,18 @@ export default function ContestDashboard() {
   const loadData = async () => {
     try {
       const [contestRes, problemRes] = await Promise.all([
-        contestAPI.get(contestId!),
-        problemAPI.list(contestId!),
+        contestAPI.get(contestId!).catch(() => null),
+        problemAPI.list(contestId!).catch(() => []),
       ])
-      setContest(contestRes.data)
-      setProblems(problemRes.data)
+      if (contestRes) setContest(contestRes.data)
+      if (problemRes) setProblems(problemRes.data)
 
-      const statusRes = await contestAPI.status(contestId!)
-      if (statusRes.data.time_remaining) setTimeRemaining(statusRes.data.time_remaining)
+      const statusRes = await contestAPI.status(contestId!).catch(() => null)
+      if (statusRes?.data?.time_remaining) setTimeRemaining(statusRes.data.time_remaining)
 
       if (participantId) {
-        const subRes = await submissionAPI.listByParticipant(participantId)
-        setSubmissions(subRes.data)
+        const subRes = await submissionAPI.listByParticipant(participantId).catch(() => null)
+        if (subRes) setSubmissions(subRes.data)
       }
     } catch (err) {
       console.error(err)
@@ -52,6 +54,12 @@ export default function ContestDashboard() {
       setLoading(false)
     }
   }
+
+  // Refresh every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(loadData, 10000)
+    return () => clearInterval(interval)
+  }, [contestId])
 
   const getProblemStatus = (problemId: string): 'solved' | 'attempted' | 'untouched' => {
     const problemSubs = submissions.filter((s) => s.problem_id === problemId)

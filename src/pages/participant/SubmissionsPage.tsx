@@ -27,15 +27,23 @@ export default function SubmissionsPage() {
   useEffect(() => {
     const pid = localStorage.getItem('participant_id')
     if (!pid) return
+    loadData()
+    const interval = setInterval(loadData, 10000)
+    return () => clearInterval(interval)
+  }, [contestId])
+
+  const loadData = () => {
+    const pid = localStorage.getItem('participant_id')
+    if (!pid) return
     Promise.all([
-      submissionAPI.listByParticipant(pid),
-      problemAPI.list(contestId!),
-    ]).then(([subRes, probRes]) => {
+      submissionAPI.listByParticipant(pid).catch(() => ({ data: [] })),
+      problemAPI.list(contestId!).catch(() => ({ data: [] })),
+    ]).then(([subRes, probRes]: any) => {
       setSubmissions(subRes.data)
       setProblems(probRes.data)
       setLoading(false)
     }).catch(() => setLoading(false))
-  }, [])
+  }
 
   const problemMap = Object.fromEntries(problems.map((p) => [p.id, p]))
 

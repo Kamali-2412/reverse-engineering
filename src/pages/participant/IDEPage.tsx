@@ -181,8 +181,10 @@ export default function IDEPage() {
 
       if (data.verdict === 'accepted') {
         toast.success('All test cases passed!')
+      } else if (data.verdict === 'running') {
+        toast('Judging...', { icon: '⏳' })
       } else {
-        toast.error(`Failed: ${data.verdict.replace(/_/g, ' ')}`)
+        toast(`Verdict: ${data.verdict.replace(/_/g, ' ')} (${data.passed_test_cases}/${data.total_test_cases} passed)`, { icon: '📊' })
       }
     } catch (err: any) {
       toast.error(err.response?.data?.detail || 'Submission failed')
