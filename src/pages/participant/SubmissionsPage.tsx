@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { submissionAPI, problemAPI } from '../../services/api'
+import { useParams, useNavigate } from 'react-router-dom'
+import { submissionAPI, problemAPI, participantAPI } from '../../services/api'
 import type { Submission, Problem } from '../../types/api'
 import PageHeader from '../../components/PageHeader'
 import LoadingSkeleton from '../../components/LoadingSkeleton'
 import EmptyState from '../../components/EmptyState'
+import toast from 'react-hot-toast'
 
 const VERDICT_STYLES: Record<string, string> = {
   accepted: 'text-green-400 bg-green-400/10 border-green-400/20',
@@ -19,6 +20,7 @@ const VERDICT_STYLES: Record<string, string> = {
 
 export default function SubmissionsPage() {
   const { contestId } = useParams<{ contestId: string }>()
+  const navigate = useNavigate()
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [problems, setProblems] = useState<Problem[]>([])
   const [loading, setLoading] = useState(true)
@@ -30,7 +32,15 @@ export default function SubmissionsPage() {
     Promise.all([
       submissionAPI.listByParticipant(pid).catch(() => ({ data: [] })),
       problemAPI.list(contestId!).catch(() => ({ data: [] })),
-    ]).then(([subRes, probRes]: any) => {
+      participantAPI.get(pid).catch(() => null),
+    ]).then(([subRes, probRes, partRes]: any) => {
+      if (partRes && partRes.data.contest_id !== contestId) {
+        localStorage.removeItem('participant_id')
+        localStorage.removeItem('contest_id')
+        toast.error('Your session belongs to a different contest. Please join again.')
+        navigate('/join')
+        return
+      }
       setSubmissions(subRes.data)
       setProblems(probRes.data)
       setLoading(false)

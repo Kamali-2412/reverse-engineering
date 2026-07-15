@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { contestAPI, problemAPI, submissionAPI } from '../../services/api'
+import { contestAPI, problemAPI, submissionAPI, participantAPI } from '../../services/api'
+import toast from 'react-hot-toast'
 import type { Contest, Problem, Submission } from '../../types/api'
 import LoadingSkeleton from '../../components/LoadingSkeleton'
 import StatusBadge from '../../components/StatusBadge'
@@ -38,15 +39,25 @@ export default function ContestDashboard() {
         contestAPI.get(contestId!).catch(() => null),
         problemAPI.list(contestId!).catch(() => ({ data: [] })),
       ])
-      if (contestRes) setContest(contestRes.data)
+      if (!contestRes) return
+      setContest(contestRes.data)
       if (problemRes) setProblems((problemRes as any).data)
 
-      const statusRes = await contestAPI.status(contestId!).catch(() => null)
-      if (statusRes?.data?.time_remaining) setTimeRemaining(statusRes.data.time_remaining)
-
       if (participantId) {
-        const subRes = await submissionAPI.listByParticipant(participantId).catch(() => null)
+        const [statusRes, subRes, partRes] = await Promise.all([
+          contestAPI.status(contestId!).catch(() => null),
+          submissionAPI.listByParticipant(participantId).catch(() => null),
+          participantAPI.get(participantId).catch(() => null),
+        ])
+        if (statusRes?.data?.time_remaining) setTimeRemaining(statusRes.data.time_remaining)
         if (subRes) setSubmissions(subRes.data)
+        if (partRes && partRes.data.contest_id !== contestId) {
+          localStorage.removeItem('participant_id')
+          localStorage.removeItem('contest_id')
+          toast.error('Your session belongs to a different contest. Please join again.')
+          navigate('/join')
+          return
+        }
       }
     } catch (err) {
       console.error(err)
