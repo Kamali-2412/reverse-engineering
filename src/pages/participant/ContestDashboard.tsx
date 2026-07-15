@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { contestAPI, problemAPI, submissionAPI, participantAPI } from '../../services/api'
 import toast from 'react-hot-toast'
@@ -16,6 +16,7 @@ export default function ContestDashboard() {
   const [loading, setLoading] = useState(true)
   const participantName = localStorage.getItem('participant_name')
   const participantId = localStorage.getItem('participant_id')
+  const loadingRef = useRef(false)
 
   useEffect(() => {
     if (!participantId) {
@@ -34,12 +35,14 @@ export default function ContestDashboard() {
   }, [timeRemaining])
 
   const loadData = async () => {
+    if (loadingRef.current) return
+    loadingRef.current = true
     try {
       const [contestRes, problemRes] = await Promise.all([
         contestAPI.get(contestId!).catch(() => null),
         problemAPI.list(contestId!).catch(() => ({ data: [] })),
       ])
-      if (!contestRes) return
+      if (!contestRes) { setLoading(false); return }
       setContest(contestRes.data)
       if (problemRes) setProblems((problemRes as any).data)
 
@@ -63,6 +66,7 @@ export default function ContestDashboard() {
       console.error(err)
     } finally {
       setLoading(false)
+      loadingRef.current = false
     }
   }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { submissionAPI, problemAPI, participantAPI } from '../../services/api'
 import type { Submission, Problem } from '../../types/api'
@@ -25,10 +25,13 @@ export default function SubmissionsPage() {
   const [problems, setProblems] = useState<Problem[]>([])
   const [loading, setLoading] = useState(true)
   const [problemFilter, setProblemFilter] = useState('')
+  const loadingRef = useRef(false)
 
   const loadData = () => {
+    if (loadingRef.current) return
+    loadingRef.current = true
     const pid = localStorage.getItem('participant_id')
-    if (!pid) return
+    if (!pid) { loadingRef.current = false; return }
     Promise.all([
       submissionAPI.listByParticipant(pid).catch(() => ({ data: [] })),
       problemAPI.list(contestId!).catch(() => ({ data: [] })),
@@ -39,12 +42,14 @@ export default function SubmissionsPage() {
         localStorage.removeItem('contest_id')
         toast.error('Your session belongs to a different contest. Please join again.')
         navigate('/join')
+        loadingRef.current = false
         return
       }
       setSubmissions(subRes.data)
       setProblems(probRes.data)
       setLoading(false)
-    }).catch(() => setLoading(false))
+      loadingRef.current = false
+    }).catch(() => { setLoading(false); loadingRef.current = false })
   }
 
   useEffect(() => {
