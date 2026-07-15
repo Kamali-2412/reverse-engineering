@@ -24,14 +24,6 @@ export default function SubmissionsPage() {
   const [loading, setLoading] = useState(true)
   const [problemFilter, setProblemFilter] = useState('')
 
-  useEffect(() => {
-    const pid = localStorage.getItem('participant_id')
-    if (!pid) return
-    loadData()
-    const interval = setInterval(loadData, 10000)
-    return () => clearInterval(interval)
-  }, [contestId])
-
   const loadData = () => {
     const pid = localStorage.getItem('participant_id')
     if (!pid) return
@@ -44,6 +36,14 @@ export default function SubmissionsPage() {
       setLoading(false)
     }).catch(() => setLoading(false))
   }
+
+  useEffect(() => {
+    const pid = localStorage.getItem('participant_id')
+    if (!pid) return
+    loadData()
+    const interval = setInterval(loadData, 10000)
+    return () => clearInterval(interval)
+  }, [contestId])
 
   const problemMap = Object.fromEntries(problems.map((p) => [p.id, p]))
 

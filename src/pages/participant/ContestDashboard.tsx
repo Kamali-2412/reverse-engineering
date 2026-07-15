@@ -36,10 +36,10 @@ export default function ContestDashboard() {
     try {
       const [contestRes, problemRes] = await Promise.all([
         contestAPI.get(contestId!).catch(() => null),
-        problemAPI.list(contestId!).catch(() => []),
+        problemAPI.list(contestId!).catch(() => ({ data: [] })),
       ])
       if (contestRes) setContest(contestRes.data)
-      if (problemRes) setProblems(problemRes.data)
+      if (problemRes) setProblems((problemRes as any).data)
 
       const statusRes = await contestAPI.status(contestId!).catch(() => null)
       if (statusRes?.data?.time_remaining) setTimeRemaining(statusRes.data.time_remaining)
@@ -54,12 +54,6 @@ export default function ContestDashboard() {
       setLoading(false)
     }
   }
-
-  // Refresh every 10 seconds
-  useEffect(() => {
-    const interval = setInterval(loadData, 10000)
-    return () => clearInterval(interval)
-  }, [contestId])
 
   const getProblemStatus = (problemId: string): 'solved' | 'attempted' | 'untouched' => {
     const problemSubs = submissions.filter((s) => s.problem_id === problemId)
