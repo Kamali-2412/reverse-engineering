@@ -187,7 +187,14 @@ export default function IDEPage() {
         toast(`Verdict: ${data.verdict.replace(/_/g, ' ')} (${data.passed_test_cases}/${data.total_test_cases} passed)`, { icon: '📊' })
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Submission failed')
+      const msg = err.response?.data?.detail
+      if (msg) {
+        toast.error(msg)
+      } else if (!err.response) {
+        toast.error('Network error — check your connection and try again')
+      } else {
+        toast.error('Submission failed')
+      }
     } finally {
       setSubmitting(false)
     }

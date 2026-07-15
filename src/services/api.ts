@@ -18,10 +18,17 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('admin_token')
       window.location.href = '/login'
+    }
+    const cfg = error.config
+    if (!cfg || cfg.__retryCount >= 2) return Promise.reject(error)
+    if (!error.response && cfg.method === 'get') {
+      cfg.__retryCount = (cfg.__retryCount || 0) + 1
+      await new Promise((r) => setTimeout(r, 1000))
+      return api(cfg)
     }
     return Promise.reject(error)
   }
