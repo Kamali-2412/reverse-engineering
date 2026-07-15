@@ -53,10 +53,10 @@ export default function ContestDashboard() {
     }
   }
 
-  const getProblemStatus = (problemId: string): 'solved' | 'failed' | 'untouched' => {
+  const getProblemStatus = (problemId: string): 'solved' | 'attempted' | 'untouched' => {
     const problemSubs = submissions.filter((s) => s.problem_id === problemId)
     if (problemSubs.some((s) => s.verdict === 'accepted')) return 'solved'
-    if (problemSubs.length > 0) return 'failed'
+    if (problemSubs.length > 0) return 'attempted'
     return 'untouched'
   }
 
@@ -106,12 +106,12 @@ export default function ContestDashboard() {
             const status = getProblemStatus(p.id)
             const statusColors = {
               solved: 'border-green-500/40 hover:border-green-500',
-              failed: 'border-red-500/30 hover:border-red-500',
+              attempted: 'border-yellow-500/30 hover:border-yellow-500',
               untouched: 'border-surface-700/80 hover:border-primary-500/50',
             }
             const statusBadge = {
               solved: { text: 'Solved', class: 'bg-green-500/15 text-green-400' },
-              failed: { text: 'Attempted', class: 'bg-red-500/15 text-red-400' },
+              attempted: { text: 'Attempted', class: 'bg-yellow-500/15 text-yellow-400' },
               untouched: { text: `${p.score} pts`, class: 'bg-surface-700/50 text-gray-400' },
             }
             return (
